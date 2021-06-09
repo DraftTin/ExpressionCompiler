@@ -1,6 +1,9 @@
 package lexer
 
+import java.io.File
 import kotlin.system.exitProcess
+
+
 
 class Lexer {
     private var data: String = ""
@@ -8,37 +11,35 @@ class Lexer {
     private var row: Int = 1
     private var col: Int = 1
     private lateinit var tokens: ArrayList<Token>
-
-    fun test() {
-        println("fuck you")
-    }
+    // 单分界符的第一个符号
+    private val charSingleDelimiter = arrayListOf('+', '-', '*', '/', '%', '(', ')', ';', '[', ']', '=', '<', '>', ',')
+    // 双分界符的第一个符号
+    private val charDoubleDelimiter = arrayListOf(':', '/')
+    // 保留字
+    private val reservedWords = TokenType.getReservedWords()
 
     /**
      * 1. 读取数据中的token
-     * 2. 如果为ERROR则报错
-     * 3. 如果为null则表示读取完成
-     * 4. 其他情况将返回的token加入到token序列中
-     * 5. 返回token序列
+     * 2. 其他情况将返回的token加入到token序列中
+     * 3. 如果加入的token是ERROR则停止解析
+     * 4. 返回tokens
      */
     fun tokenlizer(data: String): ArrayList<Token> {
-        this.current= 0                       // 当前data扫描的位置，扫描头
-        this.row= 1                           // 当前扫描的行号
-        this.col= 1                           // 当前扫描的列号
-        this.tokens = arrayListOf()    // 返回的tokens
+        this.current= 0                 // 当前data扫描的位置，扫描头
+        this.row= 1                     // 当前扫描的行号
+        this.col= 1                     // 当前扫描的列号
+        this.tokens = arrayListOf()     // 返回的tokens
         this.data = data
-
-        val singleDelimiter = arrayListOf('+', '-', '*', '/', '%', '(', ')', ';', '[', ']', '=', '<', '>')
-        val doubleDelimiter = arrayListOf(':', '/')
         while(current < data.length) {
             val char = data[current]
             var curToken: Token
             // 双分界符
             when {
-                char in doubleDelimiter -> {
+                char in charDoubleDelimiter -> {
                     curToken = handleDoubleDelimiter()
                 }
                 // 单分界符
-                char in singleDelimiter -> {
+                char in charSingleDelimiter -> {
                     curToken = handleSingleDelimiter()
                 }
                 // 空白符
@@ -59,21 +60,23 @@ class Lexer {
                 }
                 // 不能识别的字符
                 else -> {
-                    curToken = Token(row, col, TokenType.ERROR, "error")
+                    curToken = Token(row, col, TokenType.ERROR, "不能识别的字符")
                 }
             }
 
             // 判断Token的类型
             when(curToken.type) {
+                // 如果token扫描失败, 结束程序
                 TokenType.ERROR -> {
-                    // TODO 错误处理
-                    exitProcess(-1)
+                    println("$row 行, $col 列有错误")
+                    tokens.add(curToken)
+                    return tokens
                 }
                 TokenType.WHITESPACE -> {/* skip */}
                 else -> tokens.add(curToken)
             }
         }
-        // 返回tokens
+        tokens.add(Token(row, col, TokenType.EOF, "end of file"))
         return tokens
     }
 
@@ -97,6 +100,7 @@ class Lexer {
             '=' -> type = TokenType.EQUALS
             '<' -> type = TokenType.LT
             '>' -> type = TokenType.GT
+            ',' -> type = TokenType.COMMA
         }
         val curToken = Token(row, col, type, char.toString())
         current++
@@ -113,6 +117,10 @@ class Lexer {
                 current++
                 row++
                 col = 1
+                // 换行同时出现"\r\n"，两个算一个换行
+                if(current < data.length && data[current] == '\n') {
+                    current++
+                }
             }
             else {
                 current++
@@ -192,20 +200,27 @@ class Lexer {
             current++
             col++
         }
-        return Token(savedRow, savedCol, TokenType.NUMBER, value)
+        return Token(savedRow, savedCol, TokenType.INTEGER, value)
     }
 
     /**
-     * 处理变量
+     * 处理变量，判断是否可以匹配保留字
      */
     private fun handleIdentifier(): Token {
         var value = ""
         val savedRow = row
         val savedCol = col
+        // 读取字符直到遇到非变量字符
         while(current < data.length && (isAlpha(data[current]) || isDigit(data[current]) || data[current] == '_')) {
             value += data[current]
             current++
             col++
+        }
+        // 检查是否能匹配保留字
+        for(word in reservedWords) {
+            if(value.equals(word.value())) {
+                return Token(savedRow, savedCol, word, word.value())
+            }
         }
         return Token(savedRow, savedCol, TokenType.IDENTIFIER, value)
     }
@@ -276,8 +291,15 @@ class Lexer {
     private fun isAlpha(char: Char): Boolean {
         return char in 'a'..'z' || char in 'A'..'Z'
     }
-
 }
 
 fun main() {
+    val testSample: Lexer = Lexer()
+    var file = File("test.txt")
+    var text = file.readText()
+    var tokens = testSample.tokenlizer(text)
+    for(token in tokens) {
+        println("<${token.row} ${token.col} ${token.type} ${token.value}>")
+    }
+
 }

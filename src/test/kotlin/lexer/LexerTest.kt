@@ -9,14 +9,12 @@ internal class LexerTest {
 
     @Test
     fun testLexer() {
-//        var file: File = File.createTempFile("testnote", "txt")
-//        file.writeText("acs = \"xxxxxssdds\nsssssss\"\nasdzxc = 6")
-//        var text = file.readText()
-//        println(text)
-        var data = "acs = \"xxxxxssdds\\nsssssss\"\nasdzxc = 6"
-        var tokens = testSample.tokenlizer(data)
+        var file = File("test.txt")
+        var text = file.readText()
+
+        var tokens = testSample.tokenlizer(text)
         for(token in tokens) {
-            println("<${token.row} ${token.col} ${token.type} ${token.value}>")
+            println("<${token.row}, ${token.col}, ${token.type}, ${token.value}>")
         }
     }
 }
