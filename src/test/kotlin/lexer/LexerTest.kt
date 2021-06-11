@@ -1,21 +1,24 @@
 package lexer
 
+import org.junit.jupiter.api.Test
+
 import java.io.File
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import java.io.FileInputStream
+import java.io.InputStreamReader
 
 internal class LexerTest {
-    private val testSample: Lexer = Lexer()
-
     @Test
-    fun testLexer() {
-        var file = File("test.txt")
-        var text = file.readText()
+    fun tokenlize() {
 
-        var tokens = testSample.tokenlizer(text)
-        for(token in tokens) {
-            println("<${token.row}, ${token.col}, ${token.type}, ${token.value}>")
+        var file = File("test.txt")
+        var fileReader = InputStreamReader(FileInputStream(file))
+        val testSample = Lexer(fileReader)
+        var tokens = ArrayList<Token>()
+        while(true) {
+            val tok = testSample.scan()
+            tokens.add(tok)
+            if(tok.kind == Token.EndOfFileToken.kind) break
         }
+        for(tok in tokens) print("$tok ")
     }
 }
-

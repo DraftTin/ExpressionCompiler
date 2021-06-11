@@ -1,305 +1,239 @@
 package lexer
 
-import java.io.File
-import kotlin.system.exitProcess
+import java.io.Reader
+import java.util.*
+import kotlin.collections.ArrayList
 
-
-
-class Lexer {
-    private var data: String = ""
-    private var current: Int = 0
+class Lexer(data: Reader) {
+    // 数据流
+    private var data: Reader
+    // 当前扫描的字符
+    private var peek: Char = ' '
+    // 当前的扫描行
     private var row: Int = 1
+    // 当前的扫描列
     private var col: Int = 1
-    private lateinit var tokens: ArrayList<Token>
-    // 单分界符的第一个符号
-    private val charSingleDelimiter = arrayListOf('+', '-', '*', '/', '%', '(', ')', ';', '[', ']', '=', '<', '>', ',')
-    // 双分界符的第一个符号
-    private val charDoubleDelimiter = arrayListOf(':', '/')
-    // 保留字
-    private val reservedWords = TokenType.getReservedWords()
+    private var words: Hashtable<String, Word>
+
+    var diagnosics = LinkedList<String>()
+
+    companion object{
+        var line: Int = 1   // 扫描到的行数
+    }
 
     /**
-     * 1. 读取数据中的token
-     * 2. 其他情况将返回的token加入到token序列中
-     * 3. 如果加入的token是ERROR则停止解析
-     * 4. 返回tokens
+     * 添加保留字
      */
-    fun tokenlizer(data: String): ArrayList<Token> {
-        this.current= 0                 // 当前data扫描的位置，扫描头
-        this.row= 1                     // 当前扫描的行号
-        this.col= 1                     // 当前扫描的列号
-        this.tokens = arrayListOf()     // 返回的tokens
+    init {
         this.data = data
-        while(current < data.length) {
-            val char = data[current]
-            var curToken: Token
-            // 双分界符
-            when {
-                char in charDoubleDelimiter -> {
-                    curToken = handleDoubleDelimiter()
-                }
-                // 单分界符
-                char in charSingleDelimiter -> {
-                    curToken = handleSingleDelimiter()
-                }
-                // 空白符
-                isWhiteSpace(char) -> {
-                    curToken = handleWhiteSpace()
-                }
-                // 数字
-                isDigit(char, '1') -> {
-                    curToken = handleNumber()
-                }
-                // 变量
-                isAlpha(char) -> {
-                    curToken = handleIdentifier()
-                }
-                // 字符串
-                char == '"' -> {
-                    curToken = handleString()
-                }
-                // 不能识别的字符
-                else -> {
-                    curToken = Token(row, col, TokenType.ERROR, "不能识别的字符")
-                }
-            }
+        this.row = 1
+        this.col = 1
+        this.words = Hashtable()
+        reserve(Word("program", Kind.PROGRAM))
+        reserve(Word("procedure", Kind.PROCEDURE))
+        reserve(Word("while", Kind.WHILE))
+        reserve(Word("do", Kind.DO))
+        reserve(Word("elihw", Kind.ELIHW))
+        reserve(Word("begin", Kind.BEGIN))
+        reserve(Word("end", Kind.END))
+        reserve(Word("return", Kind.RETURN))
+        reserve(Word("integer", Kind.NUMBER))
+        reserve(Word("float", Kind.FLOAT))
+        reserve(Word("char", Kind.CHAR))
+        reserve(Word("bool", Kind.BOOL))
+        reserve(Word("for", Kind.WHILE))
+        reserve(Word("var", Kind.VAR))
+        reserve(Word("if", Kind.IF))
+        reserve(Word("then", Kind.THEN))
+        reserve(Word("else", Kind.ELSE))
+        reserve(Word("fi", Kind.FI))
+        reserve(Word.True)
+        reserve(Word.False)
+    }
 
-            // 判断Token的类型
-            when(curToken.type) {
-                // 如果token扫描失败, 结束程序
-                TokenType.ERROR -> {
-                    println("$row 行, $col 列有错误")
-                    tokens.add(curToken)
-                    return tokens
-                }
-                TokenType.WHITESPACE -> {/* skip */}
-                else -> tokens.add(curToken)
-            }
-        }
-        tokens.add(Token(row, col, TokenType.EOF, "end of file"))
-        return tokens
+
+    /**
+     * 添加保留字
+     */
+    private fun reserve(word: Word) {
+        words.put(word.lexeme, word)
     }
 
     /**
-     * 处理单分界符
+     * 读取下一个字符
      */
-    private fun handleSingleDelimiter(): Token {
-        val char = data[current]
-        var type: TokenType = TokenType.ERROR
-        when(char) {
-            '+' -> type = TokenType.PLUS
-            '-' -> type = TokenType.MINUS
-            '*' -> type = TokenType.TIMES
-            '/' -> type = TokenType.DIVIDE
-            '%' -> type = TokenType.MOD
-            '(' -> type = TokenType.LPAREN
-            ')' -> type = TokenType.RPAREN
-            ';' -> type = TokenType.SEMI
-            '[' -> type = TokenType.LBRACKET
-            ']' -> type = TokenType.RBRACKET
-            '=' -> type = TokenType.EQUALS
-            '<' -> type = TokenType.LT
-            '>' -> type = TokenType.GT
-            ',' -> type = TokenType.COMMA
-        }
-        val curToken = Token(row, col, type, char.toString())
-        current++
-        col++
-        return curToken
+    private fun readch() {
+        peek = data.read().toChar()
     }
 
     /**
-     * 处理空白符
+     * 读取一个字符验证是否是ch
+     * @return 验证的结果
      */
-    private fun handleWhiteSpace(): Token {
-        while(current < data.length && isWhiteSpace(data[current])) {
-            if(data[current] == '\n' || data[current] == '\r') {
-                current++
-                row++
+    fun readch(ch: Char): Boolean {
+        readch()
+        if(peek != ch) return false
+        peek = ' '      // 置空
+        return true
+    }
+
+    /**
+     * 扫描并返回一个token
+     */
+    fun scan(): Token {
+        if(peek == (-1).toChar()) return Token(Kind.EOF)
+        while(true) {
+            if(peek == ' ' || peek == '\t') {
+                readch()
+            }
+            // windows换行"\r\n"
+            else if(peek == '\r') {
+                row += 1
                 col = 1
-                // 换行同时出现"\r\n"，两个算一个换行
-                if(current < data.length && data[current] == '\n') {
-                    current++
+                if(readch('\n')) {
+                    readch()
                 }
             }
-            else {
-                current++
-                col++
+            else break
+        }
+        // 保留符号
+        when(peek) {
+            '=' -> {
+                readch()
+                return Word.eq
             }
-        }
-        return Token(row, col, TokenType.WHITESPACE, "whitespace")
-    }
-
-    /**
-     * 处理双分界符
-     */
-    private fun handleDoubleDelimiter(): Token {
-        if(current + 1 >= data.length) {
-            return Token(row, col, TokenType.ERROR, "error")
-        }
-        var curToken = Token(row, col, TokenType.ERROR, "UNKNOWN")
-        val savedRow = row
-        val savedCol = col
-        when(data[current]) {
-            ':' -> {
-                current++
-                if(data[current] == '=') {
-                    curToken = Token(row, col, TokenType.ASSIGN, ":=")
-                    ++current
-                    ++col
-                }
+            '>' -> return if(readch('=')) Word.ge else Word.gt
+            '<' -> return if(readch('=')) Word.le else Word.lt
+            '(' -> {
+                readch()
+                return Word.lsparen
+            }
+            ')' -> {
+                readch()
+                return Word.rsparen
+            }
+            '+' -> {
+                readch()
+                return Word.plus
+            }
+            '-' -> {
+                readch()
+                return Word.minus
+            }
+            '*' -> {
+                readch()
+                return Word.times
             }
             '/' -> {
-                current++
-                col++
-                when(data[current]) {
-                    // /*comment*/的情况
-                    '*' -> {
-                        while(current < data.length - 1 && (data[current] != '*' || data[current + 1] != '/')) {
-                            ++current
-                            ++col
+                readch()
+                return Word.div
+            }
+            ':' -> return if(readch('=')) Word.assign else BadToken(':')
+            '{' -> {
+                readch()
+                return Word.lbparen
+            }
+            '}' -> {
+                readch()
+                return Word.rbparen
+            }
+            ';' -> {
+                readch()
+                return Word.semi
+            }
+            '%' -> {
+                readch()
+                return Word.mod
+            }
+            '[' -> {
+                readch()
+                return Word.lbracket
+            }
+            ']' -> {
+                readch()
+                return Word.rbracket
+            }
+            ',' -> {
+                readch()
+                return Word.comma
+            }
+            '.' -> {
+                readch()
+                return Word.dot
+            }
+        }
+        // 整数或浮点数
+        if(peek.isDigit()) {
+            var intValue = 0
+            while(peek.isDigit()) {
+                intValue = intValue * 10 + peek.toInt() - '0'.toInt()
+                readch()
+            }
+            if(peek != '.') return NumberToken(intValue)
+            readch()
+            var floatValue = intValue.toFloat()
+            var digit = 10
+            while(peek.isDigit()) {
+                floatValue += peek.toFloat() / digit
+                digit *= 10
+            }
+            return RealToken(floatValue)
+        }
+        // 变量或保留字
+        if(peek.isLetter()) {
+            var name = StringBuffer("")
+            while(peek.isLetterOrDigit()) {
+                name.append(peek)
+                readch()
+            }
+            val s = name.toString()
+            val tok = words[s]
+            if(tok != null) return tok;
+            val w = Word(s, Kind.ID)
+            words.put(w.lexeme, w)
+            return w
+        }
+        // 字符型
+        if(peek == '\'') {
+            readch()
+            // ''的情况不是字符
+            if(peek == '\'')  {
+                return BadToken(ch = '\'')
+            }
+            // 检查是否有封闭的''
+            else {
+                // 记录当前的peek, 也就是字符值
+                val tmp = peek
+                readch()
+                // 不是字符, 回溯peek, 并返回BadToken
+                if(peek != '\'') {
+                    when(tmp) {
+                        // 如果忽略的是空白符直接返回
+                        ' ', '\t' -> {}
+                        // 如果忽略的是换行符则增加一行
+                        '\r' -> {
+                            row += 1
+                            col = 1
+                            if(readch('\n')) {
+                                readch()
+                            }
                         }
-                        if(current >= data.length - 1) {
-                            curToken = Token(row, col, TokenType.ERROR, "error")
-                        }
-                        else {
-                            current += 2    // */
-                            col += 2
-                            curToken = Token(savedRow, savedCol, TokenType.COMMENT, "comment")
-                        }
+                        // 其他情况回溯
+                        else -> peek = tmp
                     }
-                    // //comment的情况
-                    '/' -> {
-                        // 如果是//注释，则读取data直到换行
-                        while(current < data.length && (data[current] != '\n' && data[current] != '\r')) {
-                            ++current
-                            ++col
-                        }
-                        curToken = Token(savedRow, savedCol, TokenType.COMMENT, "comment")
-                    }
-                    // 回退一步，用单分界符处理
-                    else -> {
-                        current--
-                        curToken = handleSingleDelimiter()
-                    }
+                    return BadToken(ch = '\'')
+                }
+                // 是字符, 返回字符token
+                else {
+                    readch()
+                    return CharToken(tmp)
                 }
             }
         }
-        return curToken
+        // 其他情况，返回bad token
+        diagnosics.add("ERROR: bad  character input: '$peek'")
+        val tok = BadToken(ch = peek)
+        peek = ' '
+        return tok
     }
-
-    /**
-     * 处理数字
-     */
-    private fun handleNumber(): Token {
-        var value = ""
-        val savedRow = row
-        val savedCol = col
-        while(current < data.length && isDigit(data[current])) {
-            value += data[current]
-            current++
-            col++
-        }
-        return Token(savedRow, savedCol, TokenType.INTEGER, value)
-    }
-
-    /**
-     * 处理变量，判断是否可以匹配保留字
-     */
-    private fun handleIdentifier(): Token {
-        var value = ""
-        val savedRow = row
-        val savedCol = col
-        // 读取字符直到遇到非变量字符
-        while(current < data.length && (isAlpha(data[current]) || isDigit(data[current]) || data[current] == '_')) {
-            value += data[current]
-            current++
-            col++
-        }
-        // 检查是否能匹配保留字
-        for(word in reservedWords) {
-            if(value.equals(word.value())) {
-                return Token(savedRow, savedCol, word, word.value())
-            }
-        }
-        return Token(savedRow, savedCol, TokenType.IDENTIFIER, value)
-    }
-
-    /**
-     * 处理字符串
-     */
-    private fun handleString(): Token {
-        var value = ""
-        val savedRow = row
-        val savedCol = col
-        current++
-        col++
-        while(current < data.length &&  data[current] != '"') {
-            if(current == 17) {
-                true
-            }
-            // 不允许字符串中间换行
-            if(data[current] == '\n' || data[current] == '\r') {
-                return Token(row, col, TokenType.ERROR, "error")
-            }
-            if(data[current] == '\\') {
-                current++
-                col++
-                // 超界
-                if(current >= data.length) {
-                    return Token(row, col, TokenType.ERROR, "error")
-                }
-                when(data[current]) {
-                    't' -> value += '\t'
-                    'n' -> value += '\n'
-                    'r' -> value += '\r'
-                    // 不能识别
-                    else -> return Token(row, col, TokenType.ERROR, "error")
-                }
-            }
-            value += data[current]
-            current++
-            col++
-        }
-        // 没有扫描到封闭"
-        if(current >= data.length) {
-            return Token(row, col, TokenType.ERROR, "error")
-        }
-        // 忽略封闭'"'
-        ++current
-        return Token(savedRow, savedCol, TokenType.STRING, value)
-    }
-
-    /**
-     * 判断是否是空白符
-     */
-    private fun isWhiteSpace(char: Char): Boolean {
-        if(char == ' ' || char == '\n' || char == '\r' || char == '\t') return true
-        return false
-    }
-
-    /**
-     * 判断是否是数字
-     */
-    private fun isDigit(char: Char, start: Char = '0', end: Char = '9'): Boolean{
-        return char in start..end
-    }
-
-    /**
-     * 判断是否是字符
-     */
-    private fun isAlpha(char: Char): Boolean {
-        return char in 'a'..'z' || char in 'A'..'Z'
-    }
-}
-
-fun main() {
-    val testSample: Lexer = Lexer()
-    var file = File("test.txt")
-    var text = file.readText()
-    var tokens = testSample.tokenlizer(text)
-    for(token in tokens) {
-        println("<${token.row} ${token.col} ${token.type} ${token.value}>")
-    }
-
 }

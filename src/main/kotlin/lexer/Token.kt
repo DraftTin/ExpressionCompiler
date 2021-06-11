@@ -1,12 +1,22 @@
 package lexer
 
-class Token(row: Int, col: Int, type: TokenType, value: String) {
-    var row:Int = row           // 行号
-    var col:Int = col           // 列号
-    var type: TokenType = type  // 类型
-    var value: String = value   // 值
-}
+import parser.SyntaxNode
 
-fun main() {
-    Token(1, 2, TokenType.ERROR, "asdasd").row
+/**
+ * Token原始类型，其他Token继承该token，继承SyntaxNode，方便表示子节点
+ */
+open class Token(kind: Kind): SyntaxNode(kind) {
+    // 该token的类型
+    override var kind = kind
+
+    companion object {
+        val EndOfFileToken = Token(Kind.EOF)     // EOF
+    }
+
+    /**
+     * 输出token的kind
+     */
+    override fun toString(): String {
+        return "<${this.kind}>"
+    }
 }
