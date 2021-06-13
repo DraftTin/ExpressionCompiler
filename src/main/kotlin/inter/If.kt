@@ -1,5 +1,0 @@
-package inter
-
-class If {
-
-}

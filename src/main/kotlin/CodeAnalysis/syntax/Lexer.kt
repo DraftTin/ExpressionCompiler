@@ -2,7 +2,6 @@ package lexer
 
 import java.io.Reader
 import java.util.*
-import kotlin.collections.ArrayList
 
 class Lexer(data: Reader) {
     // 数据流
@@ -10,12 +9,12 @@ class Lexer(data: Reader) {
     // 当前扫描的字符
     private var peek: Char = ' '
     // 当前的扫描行
-    private var row: Int = 1
+    private var row: Int = 0
     // 当前的扫描列
-    private var col: Int = 1
-    private var words: Hashtable<String, Word>
+    private var col: Int = 0
+    private var words: Hashtable<String, Word> = Hashtable()
 
-    var diagnosics = LinkedList<String>()
+    var diagnostics = LinkedList<String>()
 
     companion object{
         var line: Int = 1   // 扫描到的行数
@@ -26,27 +25,24 @@ class Lexer(data: Reader) {
      */
     init {
         this.data = data
-        this.row = 1
-        this.col = 1
-        this.words = Hashtable()
-        reserve(Word("program", Kind.PROGRAM))
-        reserve(Word("procedure", Kind.PROCEDURE))
-        reserve(Word("while", Kind.WHILE))
-        reserve(Word("do", Kind.DO))
-        reserve(Word("elihw", Kind.ELIHW))
-        reserve(Word("begin", Kind.BEGIN))
-        reserve(Word("end", Kind.END))
-        reserve(Word("return", Kind.RETURN))
-        reserve(Word("integer", Kind.NUMBER))
-        reserve(Word("float", Kind.FLOAT))
-        reserve(Word("char", Kind.CHAR))
-        reserve(Word("bool", Kind.BOOL))
-        reserve(Word("for", Kind.WHILE))
-        reserve(Word("var", Kind.VAR))
-        reserve(Word("if", Kind.IF))
-        reserve(Word("then", Kind.THEN))
-        reserve(Word("else", Kind.ELSE))
-        reserve(Word("fi", Kind.FI))
+        reserve(Word("program", TokenKind.PROGRAM))
+        reserve(Word("procedure", TokenKind.PROCEDURE))
+        reserve(Word("while", TokenKind.WHILE))
+        reserve(Word("do", TokenKind.DO))
+        reserve(Word("elihw", TokenKind.ELIHW))
+        reserve(Word("begin", TokenKind.BEGIN))
+        reserve(Word("end", TokenKind.END))
+        reserve(Word("return", TokenKind.RETURN))
+        reserve(Word("integer", TokenKind.NUMBER))
+        reserve(Word("float", TokenKind.FLOAT))
+        reserve(Word("char", TokenKind.CHAR))
+        reserve(Word("bool", TokenKind.BOOL))
+        reserve(Word("for", TokenKind.WHILE))
+        reserve(Word("var", TokenKind.VAR))
+        reserve(Word("if", TokenKind.IF))
+        reserve(Word("then", TokenKind.THEN))
+        reserve(Word("else", TokenKind.ELSE))
+        reserve(Word("fi", TokenKind.FI))
         reserve(Word.True)
         reserve(Word.False)
     }
@@ -64,6 +60,11 @@ class Lexer(data: Reader) {
      */
     private fun readch() {
         peek = data.read().toChar()
+        this.col++
+        if(peek == '\r') {
+            this.row++
+            this.col = 1
+        }
     }
 
     /**
@@ -80,16 +81,13 @@ class Lexer(data: Reader) {
     /**
      * 扫描并返回一个token
      */
-    fun scan(): Token {
-        if(peek == (-1).toChar()) return Token(Kind.EOF)
+    fun scan(): SyntaxToken {
         while(true) {
             if(peek == ' ' || peek == '\t') {
                 readch()
             }
             // windows换行"\r\n"
             else if(peek == '\r') {
-                row += 1
-                col = 1
                 if(readch('\n')) {
                     readch()
                 }
@@ -164,19 +162,43 @@ class Lexer(data: Reader) {
         }
         // 整数或浮点数
         if(peek.isDigit()) {
-            var intValue = 0
+            var _text = ""  // 记录数值
+//            while(peek.isDigit()) {
+//                intValue = intValue * 10 + peek.toInt() - '0'.toInt()
+//                readch()
+//            }
             while(peek.isDigit()) {
-                intValue = intValue * 10 + peek.toInt() - '0'.toInt()
+                _text += peek
                 readch()
             }
-            if(peek != '.') return NumberToken(intValue)
-            readch()
-            var floatValue = intValue.toFloat()
-            var digit = 10
-            while(peek.isDigit()) {
-                floatValue += peek.toFloat() / digit
-                digit *= 10
+            if(peek != '.') {
+                var intValue = 0
+                try {
+                    intValue = _text.toInt()
+                } catch (e: NumberFormatException) {
+                    diagnostics.add("The number $_text can't be represented by an int32")
+                }
+                return NumberToken(intValue)
             }
+            _text += '.'
+            readch()
+            while(peek.isDigit()) {
+                _text += peek
+                readch()
+            }
+            var floatValue = 0F
+            try {
+                floatValue = _text.toFloat()
+            } catch (e: java.lang.NumberFormatException) {
+                diagnostics.add("The number $_text can't be represented by an float number")
+            }
+//            var floatValue = _text.toFloat()
+//            var digit = 10
+//            while(peek.isDigit()) {
+//                floatValue += peek.toFloat() / digit
+//                digit *= 10
+//                readch()
+//            }
             return RealToken(floatValue)
         }
         // 变量或保留字
@@ -189,7 +211,7 @@ class Lexer(data: Reader) {
             val s = name.toString()
             val tok = words[s]
             if(tok != null) return tok;
-            val w = Word(s, Kind.ID)
+            val w = Word(s, TokenKind.ID)
             words.put(w.lexeme, w)
             return w
         }
@@ -212,8 +234,6 @@ class Lexer(data: Reader) {
                         ' ', '\t' -> {}
                         // 如果忽略的是换行符则增加一行
                         '\r' -> {
-                            row += 1
-                            col = 1
                             if(readch('\n')) {
                                 readch()
                             }
@@ -230,8 +250,9 @@ class Lexer(data: Reader) {
                 }
             }
         }
+        if(peek == (-1).toChar()) return SyntaxToken(TokenKind.EOF)
         // 其他情况，返回bad token
-        diagnosics.add("ERROR: bad  character input: '$peek'")
+        diagnostics.add("ERROR: bad  character input: '$peek' at ${row}row ${col}col")
         val tok = BadToken(ch = peek)
         peek = ' '
         return tok
