@@ -14,8 +14,7 @@ class BoundBinaryOperator {
     var syntaxKind: TokenKind           // 该运算符的Token类型，方便对照识别
 
     constructor(syntaxKind: TokenKind, kind: BoundBinaryOperatorKind, type: KClass<out Any>)
-            : this(syntaxKind, kind, type, type, type) {
-    }
+            : this(syntaxKind, kind, type, type, type)
 
     constructor(syntaxKind: TokenKind, kind: BoundBinaryOperatorKind, leftType: KClass<out Any>,
                 rightType: KClass<out Any>, resultType: KClass<out Any>) {
@@ -41,10 +40,10 @@ class BoundBinaryOperator {
                 BoundBinaryOperator(TokenKind.EqualToken, BoundBinaryOperatorKind.Equals, Int::class, Int::class, Boolean::class),
                 BoundBinaryOperator(TokenKind.NotEqualsToken, BoundBinaryOperatorKind.NotEquals, Boolean::class),
                 BoundBinaryOperator(TokenKind.NotEqualsToken, BoundBinaryOperatorKind.NotEquals, Int::class, Int::class, Boolean::class),
-                BoundBinaryOperator(TokenKind.GE, BoundBinaryOperatorKind.GreaterEquals, Int::class),
-                BoundBinaryOperator(TokenKind.GT, BoundBinaryOperatorKind.GreaterThan, Int::class),
-                BoundBinaryOperator(TokenKind.LE, BoundBinaryOperatorKind.LessEquals, Int::class),
-                BoundBinaryOperator(TokenKind.LT, BoundBinaryOperatorKind.LessThan, Int::class),
+                BoundBinaryOperator(TokenKind.GE, BoundBinaryOperatorKind.GreaterEquals, Int::class, Int::class, Boolean::class),
+                BoundBinaryOperator(TokenKind.GT, BoundBinaryOperatorKind.GreaterThan, Int::class, Int::class, Boolean::class),
+                BoundBinaryOperator(TokenKind.LE, BoundBinaryOperatorKind.LessEquals, Int::class, Int::class, Boolean::class),
+                BoundBinaryOperator(TokenKind.LT, BoundBinaryOperatorKind.LessThan, Int::class, Int::class, Boolean::class),
         )
 
         /**

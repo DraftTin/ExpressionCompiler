@@ -2,6 +2,7 @@ package CodeAnalysis.syntax
 
 import CodeAnalysis.syntax.ExpressionSyntax.*
 import java.io.Reader
+import java.lang.Exception
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -56,9 +57,63 @@ class Parser {
     }
 
     fun parse(): SyntaxTree {
-        var expression = parseConditionalExpression()
+        var expression = parseExpr()
         var endOfFileToken = matchToken(TokenKind.EOF)
         return SyntaxTree(this.diagnostics, expression, endOfFileToken)
+    }
+
+    private fun parseExpr(parentPrecedence: Int = 0): ExpressionSyntax {
+        var left: ExpressionSyntax?
+        var unaryOperatorPrecedence = SyntaxFacts.getUnaryOperatorPrecedence(current.kind)
+        // 单目运算符接表达式，当前运算符优先级较高先运算
+        if(unaryOperatorPrecedence != 0 && unaryOperatorPrecedence >= parentPrecedence) {
+            var operatorToken = nextToken()
+            var operand = parseExpr(unaryOperatorPrecedence)
+            left = UnaryExpressionSyntax(operatorToken, operand)
+        }
+        // 双目运算符接表达式，当前运算符优先级较高先计算
+        else {
+            left = parsePrimiaryExpression()
+        }
+        while(true) {
+            var precedence = SyntaxFacts.getBinaryOperatorPrecedence(current.kind)
+            if (precedence == 0 || precedence <= parentPrecedence) {
+                break
+            }
+            var operatorToken = nextToken()
+            var right = parseExpr(precedence)
+            left = BinaryExpressionSyntax(left!!, operatorToken, right)
+        }
+        return left!!
+    }
+
+    /**
+     * 解析表达式
+     */
+    private fun parsePrimiaryExpression(): ExpressionSyntax {
+        return when (current.kind) {
+            TokenKind.OpenParenToken -> parseParenthesizedExpression()
+            TokenKind.FalseToken, TokenKind.TrueToken-> parseBooleanLiteral()
+            TokenKind.NumberToken -> parseNumberLiteral()
+            else -> BadExpressionSyntax(current)
+        }
+    }
+
+    private fun parseNumberLiteral(): ExpressionSyntax {
+        var numberToken = matchToken(TokenKind.NumberToken)
+        return LiteralExpressionSyntax(numberToken)
+    }
+
+    private fun parseBooleanLiteral(): ExpressionSyntax {
+        var booleanToken = matchToken(current.kind)
+        return LiteralExpressionSyntax(booleanToken)
+    }
+
+    private fun parseParenthesizedExpression(): ExpressionSyntax {
+        var left = matchToken(TokenKind.OpenParenToken)
+        var mid = parseExpr()
+        var right = matchToken(TokenKind.ClosedParenToken)
+        return ParenthesizedExpressionSyntax(left, mid, right)
     }
 
     /**

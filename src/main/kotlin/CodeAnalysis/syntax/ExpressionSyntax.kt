@@ -1,7 +1,7 @@
 package CodeAnalysis.syntax
 
 /**
- * 算数表达式节点类
+ * 表达式节点类
  */
 sealed class ExpressionSyntax(kind: TokenKind): SyntaxNode(kind) {
     data class LiteralExpressionSyntax(var literalToken: SyntaxToken): ExpressionSyntax(TokenKind.LiteralExpression) {
