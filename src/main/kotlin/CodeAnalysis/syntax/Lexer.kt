@@ -32,7 +32,7 @@ class Lexer(data: Reader) {
         reserve(SyntaxToken(TokenKind.BEGIN,"begin"))
         reserve(SyntaxToken(TokenKind.END,"end"))
         reserve(SyntaxToken(TokenKind.RETURN,"return"))
-        reserve(SyntaxToken(TokenKind.NUMBER,"integer"))
+        reserve(SyntaxToken(TokenKind.NumberToken,"integer"))
         reserve(SyntaxToken(TokenKind.REAL,"float"))
         reserve(SyntaxToken(TokenKind.CHAR,"char"))
         reserve(SyntaxToken(TokenKind.BOOL,"bool"))
@@ -168,6 +168,10 @@ class Lexer(data: Reader) {
             } else {
                 return BadToken('|')
             }
+            '!' -> {
+                readch()
+                return SyntaxToken.bang
+            }
         }
         // 整数或浮点数
         if(readPoint.isDigit()) {
@@ -187,7 +191,7 @@ class Lexer(data: Reader) {
                 } catch (e: NumberFormatException) {
                     diagnostics.add("The number $_text can't be represented by an int32")
                 }
-                return SyntaxToken(kind = TokenKind.NUMBER, text = _text, value = intValue)
+                return SyntaxToken(kind = TokenKind.NumberToken, text = _text, value = intValue)
             }
             _text += '.'
             readch()
@@ -219,8 +223,8 @@ class Lexer(data: Reader) {
             }
             val s = name.toString()
             when(getWordType(s)) {
-                TokenKind.TRUE -> return SyntaxToken(kind = TokenKind.TRUE, text = "true", value = true)
-                TokenKind.FALSE -> return SyntaxToken(kind = TokenKind.FALSE, text = "false", value = false)
+                TokenKind.TrueToken -> return SyntaxToken(kind = TokenKind.TrueToken, text = "true", value = true)
+                TokenKind.FalseToken -> return SyntaxToken(kind = TokenKind.FalseToken, text = "false", value = false)
             }
             val tok = words[s]
             if(tok != null) return tok;
@@ -275,8 +279,8 @@ class Lexer(data: Reader) {
      * 根据读取的字符串判断是否是特殊保留字，如true, false
      */
     fun getWordType(s: String): TokenKind = when(s) {
-        "true" -> TokenKind.TRUE
-        "false" -> TokenKind.FALSE
+        "true" -> TokenKind.TrueToken
+        "false" -> TokenKind.FalseToken
         else -> TokenKind.ID
     }
 }

@@ -5,5 +5,4 @@ enum class BoundNodeKind {
     BinaryExpression,
     NumberExpression,
     BadExpression
-
 }

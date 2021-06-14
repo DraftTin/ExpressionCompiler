@@ -1,10 +1,11 @@
 package CodeAnalysis.Binding
 
 import CodeAnalysis.syntax.SyntaxToken
+import CodeAnalysis.syntax.TokenKind
 import kotlin.reflect.KClass
 
 sealed class BoundExpression(kind: BoundNodeKind): BoundNode(kind) {
-    data class BoundNumberExpression(var value: Any): BoundExpression(BoundNodeKind.NumberExpression) {
+    data class BoundLiteralExpression(var value: Any): BoundExpression(BoundNodeKind.NumberExpression) {
         override fun getClassType(): KClass<out Any> {
             return value::class
         }
@@ -28,5 +29,4 @@ sealed class BoundExpression(kind: BoundNodeKind): BoundNode(kind) {
             return tok.value::class
         }
     }
-
 }

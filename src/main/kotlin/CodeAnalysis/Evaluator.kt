@@ -4,9 +4,6 @@ import CodeAnalysis.Binding.BoundBinaryOperatorKind
 import CodeAnalysis.Binding.BoundExpression
 import CodeAnalysis.Binding.BoundExpression.*
 import CodeAnalysis.Binding.BoundUnaryOperatorKind
-import CodeAnalysis.syntax.TokenKind
-import CodeAnalysis.syntax.ExpressionSyntax
-import CodeAnalysis.syntax.ExpressionSyntax.*
 
 class Evaluator(var root: BoundExpression) {
     fun evaluate(): Any {
@@ -17,18 +14,21 @@ class Evaluator(var root: BoundExpression) {
      * 返回计算的结果
      */
     private fun evaluateExpression(expression: BoundExpression): Any = when(expression) {
-        is BoundNumberExpression -> {
-            expression.value as Int
+        is BoundLiteralExpression -> {
+            expression.value
         }
         is BoundBinaryExpression -> {
             var bexpr = expression
-            var left = evaluateExpression(bexpr.left) as Int
-            var right = evaluateExpression(bexpr.right) as Int
+            var left = evaluateExpression(bexpr.left)
+            var right = evaluateExpression(bexpr.right)
             when(bexpr.operatorKind) {
-                BoundBinaryOperatorKind.Addition -> left + right
-                BoundBinaryOperatorKind.Subtraction -> left - right
-                BoundBinaryOperatorKind.Multiplication -> left * right
-                BoundBinaryOperatorKind.Division -> left  / right
+                BoundBinaryOperatorKind.Addition -> left as Int + right as Int
+                BoundBinaryOperatorKind.Subtraction -> left as Int - right as Int
+                BoundBinaryOperatorKind.Multiplication -> left as Int * right as Int
+                BoundBinaryOperatorKind.Division -> left as Int  / right as Int
+                BoundBinaryOperatorKind.LogicalAnd -> left as Boolean && right as Boolean
+                BoundBinaryOperatorKind.LogicalOr -> left as Boolean || right as Boolean
+                BoundBinaryOperatorKind.Equation -> left == right
             }
         }
 //        is ParenthesizedExpressionSyntax -> {
@@ -38,10 +38,11 @@ class Evaluator(var root: BoundExpression) {
         is BoundUnaryExpression -> {
             var expr = expression.operand
             var operatorKind = expression.operatorKind
+            var operand = evaluateExpression(expr)
             when(operatorKind) {
-                BoundUnaryOperatorKind.Identity -> evaluateExpression(expr) as Int
-                BoundUnaryOperatorKind.Negation -> 0 - evaluateExpression(expr) as Int
-                else -> throw Exception("Unexpected unary operator ${operatorKind}")
+                BoundUnaryOperatorKind.Identity -> operand as Int
+                BoundUnaryOperatorKind.Negation -> 0 - operand as Int
+                BoundUnaryOperatorKind.LogicalNegation -> !(operand as Boolean)
             }
         }
         else -> {

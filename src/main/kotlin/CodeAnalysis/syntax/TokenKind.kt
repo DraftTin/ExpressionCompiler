@@ -15,20 +15,20 @@ enum class TokenKind {
     RETURN,
     PROGRAM,
     PROCEDURE,
-    TRUE,
-    FALSE,
+    TrueToken,
+    FalseToken,
 
-    EQ,                     // =
+    EqualToken,                     // =
     GT,                     // >
     LT,                     // <
     GE,                     // >=
     LE,                     // <=
     OpenParenToken,         // (
     ClosedParenToken,       // )
-    PLUS,                   // +
-    MINUS,                  // -
-    STAR,                   // *
-    SLASH,                  // /
+    PlusToken,                   // +
+    MinusToken,                  // -
+    StarToken,                   // *
+    SlashToken,                  // /
     ASSIGN,                 // :=
     OpenComment,                // {
     ClosedComment,                // }
@@ -39,9 +39,10 @@ enum class TokenKind {
     COMMA,                  // ,
     DOT,                    // .
     AmpersandAmpersandToken,    // &&
-    PipePipe,                   // ||
+    PipePipeToken,              // ||
+    BangToken,                  // !
 
-    NUMBER,
+    NumberToken,
     REAL,
     CHAR,
     BOOL,
@@ -58,7 +59,7 @@ enum class TokenKind {
 
     // Expressions
     BinaryExpression,
-    NumberExpression,
+    LiteralExpression,
     ParenthesizedExpression,
     BadExpressionSyntax,
     UnaryExpressionSyntax,

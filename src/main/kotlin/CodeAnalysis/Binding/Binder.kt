@@ -11,22 +11,22 @@ class Binder() {
     var diagnostics = LinkedList<String>()
 
     fun bindExpression(syntax: ExpressionSyntax): BoundExpression = when(syntax) {
-        is NumberExpressionSyntax -> bindNumberExpression(syntax)
+        is LiteralExpressionSyntax -> bindLiteralExpression(syntax)
         is UnaryExpressionSyntax -> bindUnaryExpression(syntax)
-        is BinaryExpressionSyntax -> bindBinaryEression(syntax)
+        is BinaryExpressionSyntax -> bindBinaryExpression(syntax)
+        is ParenthesizedExpressionSyntax -> bindExpression(syntax.mid)
         is BadExpressionSyntax -> bindBadExpression(syntax)
-        else -> throw Exception("Unexpected syntax ${syntax.kind}")
     }
 
     private fun bindBadExpression(syntax: BadExpressionSyntax): BoundExpression {
         return BoundBadExpression(syntax.tok)
     }
 
-    private fun bindNumberExpression(syntax: NumberExpressionSyntax): BoundExpression {
-        return BoundNumberExpression(syntax.numberToken.value)
+    private fun bindLiteralExpression(syntax: LiteralExpressionSyntax): BoundExpression {
+        return BoundLiteralExpression(syntax.literalToken.value)
     }
 
-    private fun bindBinaryEression(syntax: BinaryExpressionSyntax): BoundExpression {
+    private fun bindBinaryExpression(syntax: BinaryExpressionSyntax): BoundExpression {
         var left = bindExpression(syntax.left)
         var right = bindExpression(syntax.right)
         var leftClassType = left.getClassType()
@@ -42,18 +42,26 @@ class Binder() {
     /**
      * 返回BoundBinaryOperatorKind，如果出现类型不匹配的情况，返回null
      */
-    private fun getBoundBinaryOperatorKind(opeartorKind: TokenKind, leftClassType: KClass<out Any>,
+    private fun getBoundBinaryOperatorKind(operatorKind: TokenKind, leftClassType: KClass<out Any>,
                                            rightClassType: KClass<out Any>): BoundBinaryOperatorKind? {
-        if(leftClassType != Int::class || rightClassType != Int::class) {
-            return null
+        if(leftClassType == Int::class && rightClassType == Int::class) {
+            when(operatorKind) {
+                TokenKind.PlusToken -> return BoundBinaryOperatorKind.Addition
+                TokenKind.MinusToken -> return BoundBinaryOperatorKind.Subtraction
+                TokenKind.StarToken -> return BoundBinaryOperatorKind.Multiplication
+                TokenKind.SlashToken -> return BoundBinaryOperatorKind.Division
+                TokenKind.EqualToken -> return BoundBinaryOperatorKind.Equation
+            }
         }
-        when(opeartorKind) {
-            TokenKind.PLUS -> return BoundBinaryOperatorKind.Addition
-            TokenKind.MINUS -> return BoundBinaryOperatorKind.Subtraction
-            TokenKind.STAR -> return BoundBinaryOperatorKind.Multiplication
-            TokenKind.SLASH -> return BoundBinaryOperatorKind.Division
-            else -> throw Exception("Unexpected unary operator $opeartorKind")
+        if(leftClassType == Boolean::class && rightClassType == Boolean::class) {
+            when(operatorKind) {
+                TokenKind.AmpersandAmpersandToken -> return BoundBinaryOperatorKind.LogicalAnd
+                TokenKind.PipePipeToken -> return BoundBinaryOperatorKind.LogicalOr
+                TokenKind.EqualToken -> return BoundBinaryOperatorKind.Equation
+            }
         }
+        return null
+
     }
 
     private fun bindUnaryExpression(syntax: UnaryExpressionSyntax): BoundExpression{
@@ -67,15 +75,20 @@ class Binder() {
         return BoundUnaryExpression(operator, operand)
     }
 
+
     private fun getBoundUnaryOperatorKind(operatorKind: TokenKind, classType: KClass<out Any>): BoundUnaryOperatorKind? {
-        if(classType != Int::class) {
-            return null
+        if(classType == Int::class) {
+            when(operatorKind) {
+                TokenKind.PlusToken -> return BoundUnaryOperatorKind.Identity
+                TokenKind.MinusToken -> return BoundUnaryOperatorKind.Negation
+            }
         }
-        when(operatorKind) {
-            TokenKind.PLUS -> return BoundUnaryOperatorKind.Identity
-            TokenKind.MINUS -> return BoundUnaryOperatorKind.Negation
-            else -> throw Exception("Unexpected binary operator $operatorKind")
+        if(classType == Boolean::class) {
+            when(operatorKind) {
+                TokenKind.BangToken -> return BoundUnaryOperatorKind.LogicalNegation
+            }
         }
+        return null
     }
 
     private fun prettyClassName(classType: KClass<out Any>) = when(classType){

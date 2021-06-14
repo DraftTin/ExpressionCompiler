@@ -25,70 +25,6 @@ class Parser {
         this.diagnostics.addAll(lexer.diagnostics)
     }
 
-    fun parse(): SyntaxTree {
-        var expression = parseExpression()
-        var endOfFileToken = matchToken(TokenKind.EOF)
-        return SyntaxTree(this.diagnostics, expression, endOfFileToken)
-    }
-
-    /**
-     * 解析算数Epxression，返回解析后的根
-     * Expression ::= Term OtherExpression
-     * OtherExpression ::= PLUS Expression | ε
-     */
-    private fun parseExpression(): ExpressionSyntax {
-        var left: ExpressionSyntax = parseTerm()
-
-        while(current.kind == TokenKind.PLUS ||
-                current.kind == TokenKind.MINUS) {
-            var operatorToken = nextToken()
-            var right = parseExpression()
-            left = BinaryExpressionSyntax(left, operatorToken, right)
-        }
-        return left
-    }
-
-    /**
-     * 解析一个Term返回解析后的根
-     * Term ::= factor OtherTerm
-     * OtherTerm ::= STAR Term | ε
-     */
-    private fun parseTerm(): ExpressionSyntax {
-        var left: ExpressionSyntax = parseFactor()
-
-        while(current.kind == TokenKind.STAR ||
-                current.kind == TokenKind.SLASH) {
-            var operatorToken = nextToken()
-            var right = parseTerm()
-            left = BinaryExpressionSyntax(left, operatorToken, right)
-        }
-        return left
-    }
-
-    /**
-     * 解析一个factor并返回解析后的结果
-     * Factor ::= NUMBER | (Expression) | MINUS Factor | PLUS Factor
-     */
-    private fun parseFactor(): ExpressionSyntax {
-        if(current.kind == TokenKind.OpenParenToken) {
-            var left = matchToken(TokenKind.OpenParenToken)
-            var mid = parseExpression()
-            var right = matchToken(TokenKind.ClosedParenToken)
-            return ParenthesizedExpressionSyntax(left, mid, right)
-        }
-        if(current.kind == TokenKind.PLUS || current.kind == TokenKind.MINUS) {
-            var operator = matchToken(current.kind)
-            var expr = parseFactor()
-            return UnaryExpressionSyntax(operator, expr)
-        }
-        var numberToken = matchToken(TokenKind.NUMBER)
-        if(numberToken.kind == TokenKind.NUMBER) {
-            return NumberExpressionSyntax(numberToken)
-        }
-        return BadExpressionSyntax(numberToken)
-    }
-
-
     /**
      * 返回token
      */
@@ -117,6 +53,108 @@ class Parser {
         diagnostics.add("ERROR: Unexpected token <${current.kind}>, expected <$kind>.")
         return current
 //        return SyntaxToken(kind, kind.toString())
+    }
+
+    fun parse(): SyntaxTree {
+        var expression = parseConditionalExpression()
+        var endOfFileToken = matchToken(TokenKind.EOF)
+        return SyntaxTree(this.diagnostics, expression, endOfFileToken)
+    }
+
+    /**
+     * 解析条件表达式或表达式
+     */
+    private fun parseConditionalExpression(): ExpressionSyntax {
+        var left: ExpressionSyntax = parseExpression()
+        when(current.kind) {
+            TokenKind.EqualToken -> {
+                var operatorToken = nextToken()
+                var right = parseExpression()
+                left = BinaryExpressionSyntax(left, operatorToken, right)
+            }
+        }
+        return left
+    }
+
+    /**
+     * 解析算数Expression，返回解析后的根
+     * Expression ::= Term OtherExpression
+     * OtherExpression ::= PLUS Expression | ε
+     */
+    private fun parseExpression(): ExpressionSyntax {
+        var left: ExpressionSyntax = parseTerm()
+
+        when(current.kind) {
+            TokenKind.PlusToken, TokenKind.MinusToken, TokenKind.PipePipeToken -> {
+                var operatorToken = nextToken()
+                var right = parseExpression()
+                left = BinaryExpressionSyntax(left, operatorToken, right)
+            }
+        }
+        return left
+    }
+
+    /**
+     * 解析一个Term返回解析后的根
+     * Term ::= factor OtherTerm
+     * OtherTerm ::= STAR Term | ε
+     */
+    private fun parseTerm(): ExpressionSyntax {
+        var left: ExpressionSyntax = parseFactor()
+
+        if(current.kind == TokenKind.StarToken ||
+                current.kind == TokenKind.SlashToken) {
+
+        }
+        when(current.kind) {
+            TokenKind.StarToken, TokenKind.SlashToken, TokenKind.AmpersandAmpersandToken -> {
+                var operatorToken = nextToken()
+                var right = parseTerm()
+                left = BinaryExpressionSyntax(left, operatorToken, right)
+            }
+        }
+        return left
+    }
+
+    /**
+     * 解析一个factor并返回解析后的结果
+     * Factor ::= NUMBER | (ConditionalExpression) | MINUS Factor | PLUS Factor | Bang Factor
+     */
+    private fun parseFactor(): ExpressionSyntax {
+        if(current.kind == TokenKind.OpenParenToken) {
+            var left = matchToken(TokenKind.OpenParenToken)
+//            var mid = parseExpression()
+            var mid = parseConditionalExpression()
+            var right = matchToken(TokenKind.ClosedParenToken)
+            return ParenthesizedExpressionSyntax(left, mid, right)
+        }
+        if(current.kind == TokenKind.PlusToken || current.kind == TokenKind.MinusToken) {
+            var operator = matchToken(current.kind)
+            var expr = parseFactor()
+            return UnaryExpressionSyntax(operator, expr)
+        }
+        if(current.kind == TokenKind.NumberToken) {
+            var numberToken = matchToken(TokenKind.NumberToken)
+            return LiteralExpressionSyntax(numberToken)
+        }
+        if(current.kind == TokenKind.FalseToken || current.kind == TokenKind.TrueToken) {
+            var booleanToken = matchToken(current.kind)
+            return LiteralExpressionSyntax(booleanToken)
+        }
+        if(current.kind == TokenKind.BangToken) {
+            var operator = matchToken(TokenKind.BangToken)
+            var expr = parseFactor()
+            return UnaryExpressionSyntax(operator, expr)
+        }
+        return BadExpressionSyntax(current)
+    }
+
+    /**
+     * 解析Program
+     * Program ::= ProgramHead DeclarePart ProgramBody
+     */
+    private fun praseProgram() {
+
     }
 }
 

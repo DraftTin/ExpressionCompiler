@@ -10,17 +10,17 @@ open class SyntaxToken(kind: TokenKind, var text: String, var value: Any = ""): 
     companion object {
         val EndOfFileToken = SyntaxToken(TokenKind.EOF, "end of file")     // EOF
 
-        val eq = SyntaxToken(TokenKind.EQ,"=")
+        val eq = SyntaxToken(TokenKind.EqualToken,"=")
         val gt = SyntaxToken(TokenKind.GT,">")
         val lt = SyntaxToken(TokenKind.LT, "<")
         val ge = SyntaxToken(TokenKind.GE, ">=")
         val le = SyntaxToken(TokenKind.LE, "<=")
         val lsparen = SyntaxToken(TokenKind.OpenParenToken, "(")
         val rsparen = SyntaxToken(TokenKind.ClosedParenToken,")")
-        val plus = SyntaxToken(TokenKind.PLUS,"+")
-        val minus = SyntaxToken(TokenKind.MINUS,"-")
-        val times = SyntaxToken(TokenKind.STAR,"*")
-        val div = SyntaxToken(TokenKind.SLASH,"/")
+        val plus = SyntaxToken(TokenKind.PlusToken,"+")
+        val minus = SyntaxToken(TokenKind.MinusToken,"-")
+        val times = SyntaxToken(TokenKind.StarToken,"*")
+        val div = SyntaxToken(TokenKind.SlashToken,"/")
         val assign = SyntaxToken(TokenKind.ASSIGN,":=")
         val lbparen = SyntaxToken(TokenKind.OpenComment,"{")
         val rbparen = SyntaxToken(TokenKind.ClosedComment,"}")
@@ -31,7 +31,8 @@ open class SyntaxToken(kind: TokenKind, var text: String, var value: Any = ""): 
         val comma = SyntaxToken(TokenKind.COMMA,",")
         val dot = SyntaxToken(TokenKind.DOT,".")
         val ampersandampersand = SyntaxToken(TokenKind.AmpersandAmpersandToken, "&&")
-        val pipepipe = SyntaxToken(TokenKind.PipePipe, "||")
+        val pipepipe = SyntaxToken(TokenKind.PipePipeToken, "||")
+        val bang = SyntaxToken(TokenKind.BangToken, "!")
     }
 
     /**

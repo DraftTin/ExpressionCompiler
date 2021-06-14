@@ -4,9 +4,9 @@ package CodeAnalysis.syntax
  * 算数表达式节点类
  */
 sealed class ExpressionSyntax(kind: TokenKind): SyntaxNode(kind) {
-    data class NumberExpressionSyntax(var numberToken: SyntaxToken): ExpressionSyntax(TokenKind.NumberExpression) {
+    data class LiteralExpressionSyntax(var literalToken: SyntaxToken): ExpressionSyntax(TokenKind.LiteralExpression) {
         override fun getChildren(): ArrayList<SyntaxNode> {
-           return arrayListOf(numberToken)
+           return arrayListOf(literalToken)
         }
     }
     data class BinaryExpressionSyntax(var left: ExpressionSyntax, var operator: SyntaxToken,
