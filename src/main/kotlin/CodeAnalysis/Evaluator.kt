@@ -21,7 +21,7 @@ class Evaluator(var root: BoundExpression) {
             var bexpr = expression
             var left = evaluateExpression(bexpr.left)
             var right = evaluateExpression(bexpr.right)
-            when (bexpr.operatorKind) {
+            when (bexpr.op.boundKind) {
                 // 算数运算符
                 BoundBinaryOperatorKind.Addition -> left as Int + right as Int
                 BoundBinaryOperatorKind.Subtraction -> left as Int - right as Int
@@ -61,7 +61,7 @@ class Evaluator(var root: BoundExpression) {
 //        }
         is BoundUnaryExpression -> {
             var expr = expression.operand
-            var operatorKind = expression.operatorKind
+            var operatorKind = expression.op.boundKind
             var operand = evaluateExpression(expr)
             when (operatorKind) {
                 BoundUnaryOperatorKind.Identity -> operand as Int

@@ -32,7 +32,7 @@ class Binder() {
         var right = bindExpression(syntax.right)
         var leftClassType = left.getClassType()
         var rightClassType = right.getClassType()
-        var operator: BoundBinaryOperatorKind? = getBoundBinaryOperatorKind(syntax.operator.kind, leftClassType, rightClassType)
+        var operator: BoundBinaryOperator? = BoundBinaryOperator.bind(syntax.operator.kind, leftClassType, rightClassType)
         if(operator == null) {
             diagnostics.add("Binary operator ${syntax.operator} is not defined for ${prettyClassName(leftClassType)} and ${prettyClassName(rightClassType)}")
             return left
@@ -41,61 +41,17 @@ class Binder() {
     }
 
     /**
-     * 返回BoundBinaryOperatorKind，如果出现类型不匹配的情况，返回null
+     * 获取将UnaryExpression绑定后的结果
      */
-    private fun getBoundBinaryOperatorKind(operatorKind: TokenKind, leftClassType: KClass<out Any>,
-                                           rightClassType: KClass<out Any>): BoundBinaryOperatorKind? {
-        if(leftClassType == Int::class && rightClassType == Int::class) {
-            when(operatorKind) {
-                TokenKind.PlusToken -> return BoundBinaryOperatorKind.Addition
-                TokenKind.MinusToken -> return BoundBinaryOperatorKind.Subtraction
-                TokenKind.StarToken -> return BoundBinaryOperatorKind.Multiplication
-                TokenKind.SlashToken -> return BoundBinaryOperatorKind.Division
-                TokenKind.EqualToken -> return BoundBinaryOperatorKind.Equals
-                TokenKind.NotEqualsToken -> return BoundBinaryOperatorKind.NotEquals
-                TokenKind.GT -> return BoundBinaryOperatorKind.GreaterThan
-                TokenKind.LT -> return BoundBinaryOperatorKind.LessThan
-                TokenKind.GE -> return BoundBinaryOperatorKind.GreaterEquals
-                TokenKind.LE -> return BoundBinaryOperatorKind.LessEquals
-            }
-        }
-        if(leftClassType == Boolean::class && rightClassType == Boolean::class) {
-            when(operatorKind) {
-                TokenKind.AmpersandAmpersandToken -> return BoundBinaryOperatorKind.LogicalAnd
-                TokenKind.PipePipeToken -> return BoundBinaryOperatorKind.LogicalOr
-                TokenKind.EqualToken -> return BoundBinaryOperatorKind.Equals
-                TokenKind.NotEqualsToken -> return BoundBinaryOperatorKind.NotEquals
-            }
-        }
-        return null
-
-    }
-
     private fun bindUnaryExpression(syntax: UnaryExpressionSyntax): BoundExpression{
         var operand = bindExpression(syntax.operand)
         var operandClassType = operand.getClassType()
-        var operator: BoundUnaryOperatorKind? = getBoundUnaryOperatorKind(syntax.operator.kind, operandClassType)
+        var operator: BoundUnaryOperator? = BoundUnaryOperator.bind(syntax.operator.kind, operandClassType)
         if(operator == null) {
             diagnostics.add("Unary operator ${syntax.operator} is not defined for ${prettyClassName(operandClassType)}")
             return operand
         }
         return BoundUnaryExpression(operator, operand)
-    }
-
-
-    private fun getBoundUnaryOperatorKind(operatorKind: TokenKind, classType: KClass<out Any>): BoundUnaryOperatorKind? {
-        if(classType == Int::class) {
-            when(operatorKind) {
-                TokenKind.PlusToken -> return BoundUnaryOperatorKind.Identity
-                TokenKind.MinusToken -> return BoundUnaryOperatorKind.Negation
-            }
-        }
-        if(classType == Boolean::class) {
-            when(operatorKind) {
-                TokenKind.BangToken -> return BoundUnaryOperatorKind.LogicalNegation
-            }
-        }
-        return null
     }
 
     private fun prettyClassName(classType: KClass<out Any>) = when(classType){

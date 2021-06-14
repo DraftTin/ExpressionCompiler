@@ -11,16 +11,18 @@ sealed class BoundExpression(kind: BoundNodeKind): BoundNode(kind) {
         }
     }
 
-    data class BoundUnaryExpression(var operatorKind: BoundUnaryOperatorKind, var operand: BoundExpression): BoundExpression(BoundNodeKind.UnaryExpression) {
+    data class BoundUnaryExpression(var op: BoundUnaryOperator, var operand: BoundExpression): BoundExpression(BoundNodeKind.UnaryExpression) {
+        // 由操作符返回类型
         override fun getClassType(): KClass<out Any> {
-            return operand.getClassType()
+            return op.resultType
         }
     }
 
-    data class BoundBinaryExpression(var left: BoundExpression, var operatorKind: BoundBinaryOperatorKind,
+    data class BoundBinaryExpression(var left: BoundExpression, var op: BoundBinaryOperator,
                                      var right: BoundExpression): BoundExpression(BoundNodeKind.BinaryExpression) {
+        // 由操作符返回类型
         override fun getClassType(): KClass<out Any> {
-            return left.getClassType()
+            return op.resultType
         }
     }
 
