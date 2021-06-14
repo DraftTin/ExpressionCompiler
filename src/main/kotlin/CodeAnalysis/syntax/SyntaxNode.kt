@@ -1,6 +1,4 @@
-package parser.syntax
-
-import lexer.TokenKind
+package CodeAnalysis.syntax
 
 /**
  * 语法树节点类

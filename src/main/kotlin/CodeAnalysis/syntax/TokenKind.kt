@@ -1,6 +1,4 @@
-package lexer
-
-import java.util.*
+package CodeAnalysis.syntax
 
 enum class TokenKind {
     // Tokens
@@ -32,20 +30,21 @@ enum class TokenKind {
     STAR,                   // *
     SLASH,                  // /
     ASSIGN,                 // :=
-    LBPAREN,                // {
-    RBPAREN,                // }
+    OpenComment,                // {
+    ClosedComment,                // }
     SEMI,                   // ;
     MOD,                    // %
     LBRACKET,               // [
     RBRACKET,               // ]
     COMMA,                  // ,
     DOT,                    // .
+    AmpersandAmpersandToken,    // &&
+    PipePipe,                   // ||
 
     NUMBER,
-    FLOAT,
+    REAL,
     CHAR,
     BOOL,
-    VOID,          // 空类型，用于占位
 
     ID,
 

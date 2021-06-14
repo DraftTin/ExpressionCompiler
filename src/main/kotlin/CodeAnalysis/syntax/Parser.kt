@@ -1,7 +1,6 @@
-package parser.syntax
+package CodeAnalysis.syntax
 
-import lexer.*
-import parser.syntax.ExpressionSyntax.*
+import CodeAnalysis.syntax.ExpressionSyntax.*
 import java.io.Reader
 import java.util.*
 import kotlin.collections.ArrayList
@@ -83,7 +82,7 @@ class Parser {
             return UnaryExpressionSyntax(operator, expr)
         }
         var numberToken = matchToken(TokenKind.NUMBER)
-        if(numberToken is NumberToken) {
+        if(numberToken.kind == TokenKind.NUMBER) {
             return NumberExpressionSyntax(numberToken)
         }
         return BadExpressionSyntax(numberToken)
@@ -116,7 +115,8 @@ class Parser {
             return nextToken()
         }
         diagnostics.add("ERROR: Unexpected token <${current.kind}>, expected <$kind>.")
-        return SyntaxToken(kind)
+        return current
+//        return SyntaxToken(kind, kind.toString())
     }
 }
 

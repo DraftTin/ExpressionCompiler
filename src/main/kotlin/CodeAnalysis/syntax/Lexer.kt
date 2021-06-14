@@ -1,4 +1,4 @@
-package lexer
+package CodeAnalysis.syntax
 
 import java.io.Reader
 import java.util.*
@@ -7,12 +7,12 @@ class Lexer(data: Reader) {
     // 数据流
     private var data: Reader
     // 当前扫描的字符
-    private var peek: Char = ' '
+    private var readPoint: Char = ' '
     // 当前的扫描行
-    private var row: Int = 0
+    private var row: Int = 1
     // 当前的扫描列
     private var col: Int = 0
-    private var words: Hashtable<String, Word> = Hashtable()
+    private var words: Hashtable<String, SyntaxToken> = Hashtable()
 
     var diagnostics = LinkedList<String>()
 
@@ -24,48 +24,47 @@ class Lexer(data: Reader) {
      * 添加保留字
      */
     init {
-        this.data = data
-        reserve(Word("program", TokenKind.PROGRAM))
-        reserve(Word("procedure", TokenKind.PROCEDURE))
-        reserve(Word("while", TokenKind.WHILE))
-        reserve(Word("do", TokenKind.DO))
-        reserve(Word("elihw", TokenKind.ELIHW))
-        reserve(Word("begin", TokenKind.BEGIN))
-        reserve(Word("end", TokenKind.END))
-        reserve(Word("return", TokenKind.RETURN))
-        reserve(Word("integer", TokenKind.NUMBER))
-        reserve(Word("float", TokenKind.FLOAT))
-        reserve(Word("char", TokenKind.CHAR))
-        reserve(Word("bool", TokenKind.BOOL))
-        reserve(Word("for", TokenKind.WHILE))
-        reserve(Word("var", TokenKind.VAR))
-        reserve(Word("if", TokenKind.IF))
-        reserve(Word("then", TokenKind.THEN))
-        reserve(Word("else", TokenKind.ELSE))
-        reserve(Word("fi", TokenKind.FI))
-        reserve(Word.True)
-        reserve(Word.False)
-    }
+        reserve(SyntaxToken(TokenKind.PROGRAM,"program"))
+        reserve(SyntaxToken(TokenKind.PROCEDURE,"procedure"))
+        reserve(SyntaxToken(TokenKind.WHILE,"while"))
+        reserve(SyntaxToken(TokenKind.DO,"do"))
+        reserve(SyntaxToken(TokenKind.ELIHW,"elihw"))
+        reserve(SyntaxToken(TokenKind.BEGIN,"begin"))
+        reserve(SyntaxToken(TokenKind.END,"end"))
+        reserve(SyntaxToken(TokenKind.RETURN,"return"))
+        reserve(SyntaxToken(TokenKind.NUMBER,"integer"))
+        reserve(SyntaxToken(TokenKind.REAL,"float"))
+        reserve(SyntaxToken(TokenKind.CHAR,"char"))
+        reserve(SyntaxToken(TokenKind.BOOL,"bool"))
+        reserve(SyntaxToken(TokenKind.WHILE,"for"))
+        reserve(SyntaxToken(TokenKind.VAR,"var"))
+        reserve(SyntaxToken(TokenKind.IF,"if"))
+        reserve(SyntaxToken(TokenKind.THEN,"then"))
+        reserve(SyntaxToken(TokenKind.ELSE,"else"))
+        reserve(SyntaxToken(TokenKind.FI,"fi"))
 
+        this.data = data
+    }
 
     /**
      * 添加保留字
      */
-    private fun reserve(word: Word) {
-        words.put(word.lexeme, word)
+    private fun reserve(word: SyntaxToken) {
+        words.put(word.text, word)
     }
 
     /**
      * 读取下一个字符
      */
     private fun readch() {
-        peek = data.read().toChar()
+        readPoint = data.read().toChar()
         this.col++
-        if(peek == '\r') {
+        if(readPoint == '\r') {
             this.row++
             this.col = 1
         }
     }
+
 
     /**
      * 读取一个字符验证是否是ch
@@ -73,8 +72,8 @@ class Lexer(data: Reader) {
      */
     fun readch(ch: Char): Boolean {
         readch()
-        if(peek != ch) return false
-        peek = ' '      // 置空
+        if(readPoint != ch) return false
+        readPoint = ' '      // 置空
         return true
     }
 
@@ -83,11 +82,11 @@ class Lexer(data: Reader) {
      */
     fun scan(): SyntaxToken {
         while(true) {
-            if(peek == ' ' || peek == '\t') {
+            if(readPoint == ' ' || readPoint == '\t') {
                 readch()
             }
             // windows换行"\r\n"
-            else if(peek == '\r') {
+            else if(readPoint == '\r') {
                 if(readch('\n')) {
                     readch()
                 }
@@ -95,95 +94,105 @@ class Lexer(data: Reader) {
             else break
         }
         // 保留符号
-        when(peek) {
+        when(readPoint) {
             '=' -> {
                 readch()
-                return Word.eq
+                return SyntaxToken.eq
             }
-            '>' -> return if(readch('=')) Word.ge else Word.gt
-            '<' -> return if(readch('=')) Word.le else Word.lt
+            '>' -> return if(readch('=')) SyntaxToken.ge else SyntaxToken.gt
+            '<' -> return if(readch('=')) SyntaxToken.le else SyntaxToken.lt
             '(' -> {
                 readch()
-                return Word.lsparen
+                return SyntaxToken.lsparen
             }
             ')' -> {
                 readch()
-                return Word.rsparen
+                return SyntaxToken.rsparen
             }
             '+' -> {
                 readch()
-                return Word.plus
+                return SyntaxToken.plus
             }
             '-' -> {
                 readch()
-                return Word.minus
+                return SyntaxToken.minus
             }
             '*' -> {
                 readch()
-                return Word.times
+                return SyntaxToken.times
             }
             '/' -> {
                 readch()
-                return Word.div
+                return SyntaxToken.div
             }
-            ':' -> return if(readch('=')) Word.assign else BadToken(':')
+            ':' -> return if(readch('=')) SyntaxToken.assign else BadToken(':')
             '{' -> {
                 readch()
-                return Word.lbparen
+                return SyntaxToken.lbparen
             }
             '}' -> {
                 readch()
-                return Word.rbparen
+                return SyntaxToken.rbparen
             }
             ';' -> {
                 readch()
-                return Word.semi
+                return SyntaxToken.semi
             }
             '%' -> {
                 readch()
-                return Word.mod
+                return SyntaxToken.mod
             }
             '[' -> {
                 readch()
-                return Word.lbracket
+                return SyntaxToken.lbracket
             }
             ']' -> {
                 readch()
-                return Word.rbracket
+                return SyntaxToken.rbracket
             }
             ',' -> {
                 readch()
-                return Word.comma
+                return SyntaxToken.comma
             }
             '.' -> {
                 readch()
-                return Word.dot
+                return SyntaxToken.dot
+            }
+            '&' -> if(readch('&')) {
+                return SyntaxToken.ampersandampersand
+            } else {
+                return BadToken('&')
+            }
+            '|' -> if(readch('|')) {
+                return SyntaxToken.pipepipe
+            } else {
+                return BadToken('|')
             }
         }
         // 整数或浮点数
-        if(peek.isDigit()) {
+        if(readPoint.isDigit()) {
             var _text = ""  // 记录数值
 //            while(peek.isDigit()) {
 //                intValue = intValue * 10 + peek.toInt() - '0'.toInt()
 //                readch()
 //            }
-            while(peek.isDigit()) {
-                _text += peek
+            while(readPoint.isDigit()) {
+                _text += readPoint
                 readch()
             }
-            if(peek != '.') {
+            if(readPoint != '.') {
                 var intValue = 0
                 try {
                     intValue = _text.toInt()
                 } catch (e: NumberFormatException) {
                     diagnostics.add("The number $_text can't be represented by an int32")
                 }
-                return NumberToken(intValue)
+                return SyntaxToken(kind = TokenKind.NUMBER, text = _text, value = intValue)
             }
             _text += '.'
             readch()
-            while(peek.isDigit()) {
-                _text += peek
+            while(readPoint.isDigit()) {
+                _text += readPoint
                 readch()
             }
             var floatValue = 0F
@@ -199,36 +208,40 @@ class Lexer(data: Reader) {
 //                digit *= 10
 //                readch()
 //            }
-            return RealToken(floatValue)
+            return SyntaxToken(kind = TokenKind.REAL, text = _text, value = floatValue)
         }
         // 变量或保留字
-        if(peek.isLetter()) {
+        if(readPoint.isLetter()) {
             var name = StringBuffer("")
-            while(peek.isLetterOrDigit()) {
-                name.append(peek)
+            while(readPoint.isLetterOrDigit()) {
+                name.append(readPoint)
                 readch()
             }
             val s = name.toString()
+            when(getWordType(s)) {
+                TokenKind.TRUE -> return SyntaxToken(kind = TokenKind.TRUE, text = "true", value = true)
+                TokenKind.FALSE -> return SyntaxToken(kind = TokenKind.FALSE, text = "false", value = false)
+            }
             val tok = words[s]
             if(tok != null) return tok;
-            val w = Word(s, TokenKind.ID)
-            words.put(w.lexeme, w)
+            val w = SyntaxToken(TokenKind.ID, s)
+            words.put(w.text, w)
             return w
         }
         // 字符型
-        if(peek == '\'') {
+        if(readPoint == '\'') {
             readch()
             // ''的情况不是字符
-            if(peek == '\'')  {
+            if(readPoint == '\'')  {
                 return BadToken(ch = '\'')
             }
             // 检查是否有封闭的''
             else {
                 // 记录当前的peek, 也就是字符值
-                val tmp = peek
+                val tmp = readPoint
                 readch()
                 // 不是字符, 回溯peek, 并返回BadToken
-                if(peek != '\'') {
+                if(readPoint != '\'') {
                     when(tmp) {
                         // 如果忽略的是空白符直接返回
                         ' ', '\t' -> {}
@@ -239,22 +252,31 @@ class Lexer(data: Reader) {
                             }
                         }
                         // 其他情况回溯
-                        else -> peek = tmp
+                        else -> readPoint = tmp
                     }
                     return BadToken(ch = '\'')
                 }
                 // 是字符, 返回字符token
                 else {
                     readch()
-                    return CharToken(tmp)
+                    return SyntaxToken(TokenKind.CHAR, tmp.toString(), tmp)
                 }
             }
         }
-        if(peek == (-1).toChar()) return SyntaxToken(TokenKind.EOF)
+        if(readPoint == (-1).toChar()) return SyntaxToken(TokenKind.EOF, "end of file")
         // 其他情况，返回bad token
-        diagnostics.add("ERROR: bad  character input: '$peek' at ${row}row ${col}col")
-        val tok = BadToken(ch = peek)
-        peek = ' '
+        diagnostics.add("ERROR: bad  character input: '$readPoint' at ${row}row ${col}col")
+        val tok = BadToken(ch = readPoint)
+        readPoint = ' '
         return tok
+    }
+
+    /**
+     * 根据读取的字符串判断是否是特殊保留字，如true, false
+     */
+    fun getWordType(s: String): TokenKind = when(s) {
+        "true" -> TokenKind.TRUE
+        "false" -> TokenKind.FALSE
+        else -> TokenKind.ID
     }
 }

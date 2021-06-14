@@ -1,22 +1,18 @@
-package parser.syntax
-
-import lexer.TokenKind
-import lexer.NumberToken
-import lexer.SyntaxToken
+package CodeAnalysis.syntax
 
 /**
  * 算数表达式节点类
  */
 sealed class ExpressionSyntax(kind: TokenKind): SyntaxNode(kind) {
-    data class NumberExpressionSyntax(var numberToken: NumberToken): ExpressionSyntax(TokenKind.NumberExpression) {
+    data class NumberExpressionSyntax(var numberToken: SyntaxToken): ExpressionSyntax(TokenKind.NumberExpression) {
         override fun getChildren(): ArrayList<SyntaxNode> {
            return arrayListOf(numberToken)
         }
     }
-    data class BinaryExpressionSyntax(var left: ExpressionSyntax, var operatorToken: SyntaxToken,
+    data class BinaryExpressionSyntax(var left: ExpressionSyntax, var operator: SyntaxToken,
                                       var right: ExpressionSyntax): ExpressionSyntax(TokenKind.BinaryExpression) {
         override fun getChildren(): ArrayList<SyntaxNode> {
-            return arrayListOf(left, operatorToken, right)
+            return arrayListOf(left, operator, right)
         }
     }
 
@@ -27,10 +23,10 @@ sealed class ExpressionSyntax(kind: TokenKind): SyntaxNode(kind) {
         }
     }
 
-    data class UnaryExpressionSyntax(var operator: SyntaxToken, var expression: ExpressionSyntax):
+    data class UnaryExpressionSyntax(var operator: SyntaxToken, var operand: ExpressionSyntax):
             ExpressionSyntax(TokenKind.UnaryExpressionSyntax) {
         override fun getChildren(): ArrayList<SyntaxNode> {
-            return arrayListOf(operator, expression)
+            return arrayListOf(operator, operand)
         }
     }
 

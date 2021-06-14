@@ -1,2 +1,9 @@
-package CodeAnalysis.Binding 
+package CodeAnalysis.Binding
 
+enum class BoundNodeKind {
+    UnaryExpression,
+    BinaryExpression,
+    NumberExpression,
+    BadExpression
+
+}

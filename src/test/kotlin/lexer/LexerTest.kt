@@ -1,6 +1,8 @@
 package lexer
 
 import org.junit.jupiter.api.Test
+import CodeAnalysis.syntax.Lexer
+import CodeAnalysis.syntax.SyntaxToken
 
 import java.io.File
 import java.io.FileInputStream
@@ -13,11 +15,11 @@ internal class LexerTest {
         var file = File("test.txt")
         var fileReader = InputStreamReader(FileInputStream(file))
         val testSample = Lexer(fileReader)
-        var tokens = ArrayList<Token>()
+        var tokens = ArrayList<SyntaxToken>()
         while(true) {
             val tok = testSample.scan()
             tokens.add(tok)
-            if(tok.kind == Token.EndOfFileToken.kind) break
+            if(tok.kind == SyntaxToken.EndOfFileToken.kind) break
         }
         for(tok in tokens) print("$tok ")
     }

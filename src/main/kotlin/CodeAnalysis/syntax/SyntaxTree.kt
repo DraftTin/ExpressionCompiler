@@ -1,6 +1,5 @@
-package parser.syntax
+package CodeAnalysis.syntax
 
-import lexer.SyntaxToken
 import java.io.Reader
 
 class SyntaxTree(var diagnostics: List<String>, var root: ExpressionSyntax, var endOfFileToken: SyntaxToken) {

@@ -1,2 +1,6 @@
-package CodeAnalysis.Binding 
+package CodeAnalysis.Binding
 
+enum class  BoundUnaryOperatorKind {
+    Identity,
+    Negation
+}
