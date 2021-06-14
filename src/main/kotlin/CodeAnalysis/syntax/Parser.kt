@@ -62,14 +62,17 @@ class Parser {
     }
 
     /**
-     * 解析条件表达式或表达式
+     * 解析条件表达式或表达式@
+     * cexpr ::= expr otherCExpr
+     * otherCExpr ::= CmpOp cexpr | ε
      */
     private fun parseConditionalExpression(): ExpressionSyntax {
         var left: ExpressionSyntax = parseExpression()
         when(current.kind) {
-            TokenKind.EqualToken -> {
+            TokenKind.EqualToken, TokenKind.NotEqualsToken,
+            TokenKind.GE, TokenKind.LE, TokenKind.GT, TokenKind.LT -> {
                 var operatorToken = nextToken()
-                var right = parseExpression()
+                var right = parseConditionalExpression()
                 left = BinaryExpressionSyntax(left, operatorToken, right)
             }
         }

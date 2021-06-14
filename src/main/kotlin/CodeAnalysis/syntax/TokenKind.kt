@@ -18,7 +18,8 @@ enum class TokenKind {
     TrueToken,
     FalseToken,
 
-    EqualToken,                     // =
+    EqualToken,             // =
+    NotEqualsToken,         // !=
     GT,                     // >
     LT,                     // <
     GE,                     // >=
@@ -48,11 +49,6 @@ enum class TokenKind {
     BOOL,
 
     ID,
-
-    BASIC,         // 基本类型
-    INDEX,         // 可索引类型
-
-    TEMP,
 
     EOF,            // end of file
     BadToken,       // 未识别的token

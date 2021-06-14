@@ -33,6 +33,7 @@ open class SyntaxToken(kind: TokenKind, var text: String, var value: Any = ""): 
         val ampersandampersand = SyntaxToken(TokenKind.AmpersandAmpersandToken, "&&")
         val pipepipe = SyntaxToken(TokenKind.PipePipeToken, "||")
         val bang = SyntaxToken(TokenKind.BangToken, "!")
+        val nequals = SyntaxToken(TokenKind.NotEqualsToken, "!=")
     }
 
     /**

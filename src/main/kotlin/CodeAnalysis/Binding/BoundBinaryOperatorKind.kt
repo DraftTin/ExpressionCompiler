@@ -7,5 +7,10 @@ enum class BoundBinaryOperatorKind {
     Division,
     LogicalAnd,
     LogicalOr,
-    Equation
+    Equals,
+    NotEquals,
+    GreaterThan,
+    LessThan,
+    GreaterEquals,
+    LessEquals
 }

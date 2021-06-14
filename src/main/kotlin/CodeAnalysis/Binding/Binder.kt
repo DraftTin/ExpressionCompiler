@@ -4,6 +4,7 @@ import CodeAnalysis.Binding.BoundExpression.*
 import CodeAnalysis.syntax.ExpressionSyntax
 import CodeAnalysis.syntax.ExpressionSyntax.*
 import CodeAnalysis.syntax.TokenKind
+import java.lang.Exception
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -50,14 +51,20 @@ class Binder() {
                 TokenKind.MinusToken -> return BoundBinaryOperatorKind.Subtraction
                 TokenKind.StarToken -> return BoundBinaryOperatorKind.Multiplication
                 TokenKind.SlashToken -> return BoundBinaryOperatorKind.Division
-                TokenKind.EqualToken -> return BoundBinaryOperatorKind.Equation
+                TokenKind.EqualToken -> return BoundBinaryOperatorKind.Equals
+                TokenKind.NotEqualsToken -> return BoundBinaryOperatorKind.NotEquals
+                TokenKind.GT -> return BoundBinaryOperatorKind.GreaterThan
+                TokenKind.LT -> return BoundBinaryOperatorKind.LessThan
+                TokenKind.GE -> return BoundBinaryOperatorKind.GreaterEquals
+                TokenKind.LE -> return BoundBinaryOperatorKind.LessEquals
             }
         }
         if(leftClassType == Boolean::class && rightClassType == Boolean::class) {
             when(operatorKind) {
                 TokenKind.AmpersandAmpersandToken -> return BoundBinaryOperatorKind.LogicalAnd
                 TokenKind.PipePipeToken -> return BoundBinaryOperatorKind.LogicalOr
-                TokenKind.EqualToken -> return BoundBinaryOperatorKind.Equation
+                TokenKind.EqualToken -> return BoundBinaryOperatorKind.Equals
+                TokenKind.NotEqualsToken -> return BoundBinaryOperatorKind.NotEquals
             }
         }
         return null
@@ -95,6 +102,6 @@ class Binder() {
         Int::class -> "int"
         Float::class -> "float"
         Boolean::class -> "bool"
-        else -> "void"
+        else -> "garbage"
     }
 }

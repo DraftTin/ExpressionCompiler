@@ -67,7 +67,7 @@ class Lexer(data: Reader) {
 
 
     /**
-     * 读取一个字符验证是否是ch
+     * 读取一个字符验证是否是ch，验证成功则将readPoint置空
      * @return 验证的结果
      */
     fun readch(ch: Char): Boolean {
@@ -99,8 +99,20 @@ class Lexer(data: Reader) {
                 readch()
                 return SyntaxToken.eq
             }
-            '>' -> return if(readch('=')) SyntaxToken.ge else SyntaxToken.gt
-            '<' -> return if(readch('=')) SyntaxToken.le else SyntaxToken.lt
+            '>' -> {
+                if(readch('=')) {
+                    return SyntaxToken.ge
+                } else {
+                    return SyntaxToken.gt
+                }
+            }
+            '<' -> {
+                if(readch('=')) {
+                    return SyntaxToken.le
+                } else {
+                    return SyntaxToken.lt
+                }
+            }
             '(' -> {
                 readch()
                 return SyntaxToken.lsparen
@@ -158,19 +170,26 @@ class Lexer(data: Reader) {
                 readch()
                 return SyntaxToken.dot
             }
-            '&' -> if(readch('&')) {
-                return SyntaxToken.ampersandampersand
-            } else {
-                return BadToken('&')
+            '&' -> {
+                if(readch('&')) {
+                    return SyntaxToken.ampersandampersand
+                } else {
+                    return BadToken('&')
+                }
             }
-            '|' -> if(readch('|')) {
-                return SyntaxToken.pipepipe
-            } else {
-                return BadToken('|')
+            '|' -> {
+                if (readch('|')) {
+                    return SyntaxToken.pipepipe
+                } else {
+                    return BadToken('|')
+                }
             }
             '!' -> {
-                readch()
-                return SyntaxToken.bang
+                if(readch('=')) {
+                    return SyntaxToken.nequals
+                } else {
+                    return SyntaxToken.bang
+                }
             }
         }
         // 整数或浮点数
