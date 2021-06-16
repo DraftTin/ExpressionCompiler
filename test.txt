@@ -5,4 +5,3 @@ var integer w;
 begin
 while(c != 5)
 end
->

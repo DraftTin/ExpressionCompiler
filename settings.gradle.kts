@@ -1,3 +1,3 @@
 
-rootProject.name = "MySNL"
+rootProject.name = "ExpressionCompiler"
 

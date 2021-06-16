@@ -1,2 +1,2 @@
-# Compiler
-simple compiler for assignment, language like Pascal
+# Expression Compiler
+表达式的Compiler，支持整数的运算括号，布尔类型逻辑运算及带有类型检查的语义分析
