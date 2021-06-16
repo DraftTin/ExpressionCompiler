@@ -26,8 +26,6 @@ fun prettyPrint(node: SyntaxNode, indent: String = "", isLast: Boolean = true) {
     }
 }
 
-
-
 fun main() {
     var showTree = false
     while(true) {

@@ -1,7 +1,7 @@
 package CodeAnalysis.syntax
 
 enum class TokenKind {
-    // Tokens
+    // Keywords
     VAR,
     IF,
     THEN,
@@ -17,6 +17,7 @@ enum class TokenKind {
     PROCEDURE,
     TrueToken,
     FalseToken,
+    TypeToken,
 
     EqualToken,             // =
     NotEqualsToken,         // !=
@@ -42,13 +43,14 @@ enum class TokenKind {
     AmpersandAmpersandToken,    // &&
     PipePipeToken,              // ||
     BangToken,                  // !
+    DotDotToken,                // ..
 
     NumberToken,
     REAL,
     CHAR,
     BOOL,
 
-    ID,
+    IdToken,
 
     EOF,            // end of file
     BadToken,       // 未识别的token

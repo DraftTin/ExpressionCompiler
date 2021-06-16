@@ -42,6 +42,7 @@ class Lexer(data: Reader) {
         reserve(SyntaxToken(TokenKind.THEN,"then"))
         reserve(SyntaxToken(TokenKind.ELSE,"else"))
         reserve(SyntaxToken(TokenKind.FI,"fi"))
+        reserve(SyntaxToken(TokenKind.TypeToken, "type"))
 
         this.data = data
     }
@@ -167,8 +168,11 @@ class Lexer(data: Reader) {
                 return SyntaxToken.comma
             }
             '.' -> {
-                readch()
-                return SyntaxToken.dot
+                if(readch('.')) {
+                    return SyntaxToken.dotdot
+                } else {
+                    return SyntaxToken.dot
+                }
             }
             '&' -> {
                 if(readch('&')) {
@@ -246,8 +250,10 @@ class Lexer(data: Reader) {
                 TokenKind.FalseToken -> return SyntaxToken(kind = TokenKind.FalseToken, text = "false", value = false)
             }
             val tok = words[s]
-            if(tok != null) return tok;
-            val w = SyntaxToken(TokenKind.ID, s)
+            // 如果已经在words表中存在则不需要再生成一个token
+            if(tok != null) return tok
+            // 生成一个变量token
+            val w = SyntaxToken(TokenKind.IdToken, s)
             words.put(w.text, w)
             return w
         }
@@ -300,6 +306,6 @@ class Lexer(data: Reader) {
     fun getWordType(s: String): TokenKind = when(s) {
         "true" -> TokenKind.TrueToken
         "false" -> TokenKind.FalseToken
-        else -> TokenKind.ID
+        else -> TokenKind.IdToken
     }
 }

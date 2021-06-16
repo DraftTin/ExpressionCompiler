@@ -2,7 +2,6 @@ package CodeAnalysis.syntax
 
 import CodeAnalysis.syntax.ExpressionSyntax.*
 import java.io.Reader
-import java.lang.Exception
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -57,18 +56,18 @@ class Parser {
     }
 
     fun parse(): SyntaxTree {
-        var expression = parseExpr()
+        var expression = parseExpression()
         var endOfFileToken = matchToken(TokenKind.EOF)
         return SyntaxTree(this.diagnostics, expression, endOfFileToken)
     }
 
-    private fun parseExpr(parentPrecedence: Int = 0): ExpressionSyntax {
+    private fun parseExpression(parentPrecedence: Int = 0): ExpressionSyntax {
         var left: ExpressionSyntax?
         var unaryOperatorPrecedence = SyntaxFacts.getUnaryOperatorPrecedence(current.kind)
         // 单目运算符接表达式，当前运算符优先级较高先运算
         if(unaryOperatorPrecedence != 0 && unaryOperatorPrecedence >= parentPrecedence) {
             var operatorToken = nextToken()
-            var operand = parseExpr(unaryOperatorPrecedence)
+            var operand = parseExpression(unaryOperatorPrecedence)
             left = UnaryExpressionSyntax(operatorToken, operand)
         }
         // 双目运算符接表达式，当前运算符优先级较高先计算
@@ -81,7 +80,7 @@ class Parser {
                 break
             }
             var operatorToken = nextToken()
-            var right = parseExpr(precedence)
+            var right = parseExpression(precedence)
             left = BinaryExpressionSyntax(left!!, operatorToken, right)
         }
         return left!!
@@ -111,108 +110,9 @@ class Parser {
 
     private fun parseParenthesizedExpression(): ExpressionSyntax {
         var left = matchToken(TokenKind.OpenParenToken)
-        var mid = parseExpr()
+        var mid = parseExpression()
         var right = matchToken(TokenKind.ClosedParenToken)
         return ParenthesizedExpressionSyntax(left, mid, right)
-    }
-
-    /**
-     * 解析条件表达式或表达式@
-     * cexpr ::= expr otherCExpr
-     * otherCExpr ::= CmpOp cexpr | ε
-     */
-    private fun parseConditionalExpression(): ExpressionSyntax {
-        var left: ExpressionSyntax = parseExpression()
-        when(current.kind) {
-            TokenKind.EqualToken, TokenKind.NotEqualsToken,
-            TokenKind.GE, TokenKind.LE, TokenKind.GT, TokenKind.LT -> {
-                var operatorToken = nextToken()
-                var right = parseConditionalExpression()
-                left = BinaryExpressionSyntax(left, operatorToken, right)
-            }
-        }
-        return left
-    }
-
-    /**
-     * 解析算数Expression，返回解析后的根
-     * Expression ::= Term OtherExpression
-     * OtherExpression ::= PLUS Expression | ε
-     */
-    private fun parseExpression(): ExpressionSyntax {
-        var left: ExpressionSyntax = parseTerm()
-
-        when(current.kind) {
-            TokenKind.PlusToken, TokenKind.MinusToken, TokenKind.PipePipeToken -> {
-                var operatorToken = nextToken()
-                var right = parseExpression()
-                left = BinaryExpressionSyntax(left, operatorToken, right)
-            }
-        }
-        return left
-    }
-
-    /**
-     * 解析一个Term返回解析后的根
-     * Term ::= factor OtherTerm
-     * OtherTerm ::= STAR Term | ε
-     */
-    private fun parseTerm(): ExpressionSyntax {
-        var left: ExpressionSyntax = parseFactor()
-
-        if(current.kind == TokenKind.StarToken ||
-                current.kind == TokenKind.SlashToken) {
-
-        }
-        when(current.kind) {
-            TokenKind.StarToken, TokenKind.SlashToken, TokenKind.AmpersandAmpersandToken -> {
-                var operatorToken = nextToken()
-                var right = parseTerm()
-                left = BinaryExpressionSyntax(left, operatorToken, right)
-            }
-        }
-        return left
-    }
-
-    /**
-     * 解析一个factor并返回解析后的结果
-     * Factor ::= NUMBER | (ConditionalExpression) | MINUS Factor | PLUS Factor | Bang Factor
-     */
-    private fun parseFactor(): ExpressionSyntax {
-        if(current.kind == TokenKind.OpenParenToken) {
-            var left = matchToken(TokenKind.OpenParenToken)
-//            var mid = parseExpression()
-            var mid = parseConditionalExpression()
-            var right = matchToken(TokenKind.ClosedParenToken)
-            return ParenthesizedExpressionSyntax(left, mid, right)
-        }
-        if(current.kind == TokenKind.PlusToken || current.kind == TokenKind.MinusToken) {
-            var operator = matchToken(current.kind)
-            var expr = parseFactor()
-            return UnaryExpressionSyntax(operator, expr)
-        }
-        if(current.kind == TokenKind.NumberToken) {
-            var numberToken = matchToken(TokenKind.NumberToken)
-            return LiteralExpressionSyntax(numberToken)
-        }
-        if(current.kind == TokenKind.FalseToken || current.kind == TokenKind.TrueToken) {
-            var booleanToken = matchToken(current.kind)
-            return LiteralExpressionSyntax(booleanToken)
-        }
-        if(current.kind == TokenKind.BangToken) {
-            var operator = matchToken(TokenKind.BangToken)
-            var expr = parseFactor()
-            return UnaryExpressionSyntax(operator, expr)
-        }
-        return BadExpressionSyntax(current)
-    }
-
-    /**
-     * 解析Program
-     * Program ::= ProgramHead DeclarePart ProgramBody
-     */
-    private fun praseProgram() {
-
     }
 }
 
@@ -221,7 +121,6 @@ fun main() {
         for (j in 0..15) {
             val number = i * 15 + j
             val str = String.format("%3d", number)
-
             print("\u001b[48;5;${number}m $str")
             print("\u001b[0m")
         }
